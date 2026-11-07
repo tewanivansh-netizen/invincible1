@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
@@ -23,6 +24,9 @@ const app = express();
 // const port = 3000;
 const port = process.env.PORT || 3000;
 
+// Trust reverse proxy (Render, Heroku, etc.) for secure cookie handling over HTTPS
+app.set("trust proxy", 1);
+
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -42,7 +46,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: "super-secret-key",
+    secret: process.env.SESSION_SECRET || "super-secret-key",
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -89,22 +93,27 @@ app.get("/register", (req, res) => {
 
 // 🔐 Signup Form Submit
 app.post("/signup", async (req, res) => {
-  const { username, email, contact, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user_id = generateUUID();
-
-  db.query(
-    "INSERT INTO users (user_id, user_name, email, contact, password) VALUES (?, ?, ?, ?, ?)",
-    [user_id, username, email, contact, hashedPassword],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
+  try {
+    const { username, email, contact, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).send("Username and password are required.");
     }
-  );
-  console.log(user_id, username, email, contact, hashedPassword);
-  const user = { user_id, username, email, contact };
-  req.session.user = user;
-  res.redirect("/");
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user_id = generateUUID();
+
+    await db.query(
+      "INSERT INTO users (user_id, user_name, email, contact, password) VALUES (?, ?, ?, ?, ?)",
+      [user_id, username, email, contact, hashedPassword]
+    );
+
+    const user = { user_id, username, email, contact };
+    req.session.user = user;
+    res.redirect("/");
+  } catch (err) {
+    console.error("Signup error:", err);
+    res.status(500).send("Unable to register account. Please try again.");
+  }
 });
 
 // 🔓 Login Form Submit
@@ -142,7 +151,6 @@ app.post("/login", async (req, res) => {
 
 // Profile Page
 app.get("/profile", async (req, res) => {
-  console.log("Profile User:", req.session.user);
   if (!req.session.user) {
     return res.redirect("/register");
   }
@@ -173,7 +181,7 @@ app.get("/profile", async (req, res) => {
     res.render("profile", { user: req.session.user, bookings });
   } catch (err) {
     console.error("Profile error:", err);
-    res.status(500).send("Database error: " + err.message);
+    res.status(500).send("Unable to load profile. Please try again later.");
   }
 });
 
@@ -185,15 +193,16 @@ app.get("/about", (req, res) => {
 // Add Event
 // Insert Event
 app.post("/events", async (req, res) => {
-  const { title, image, description, price, duration } = req.body;
+  const { title, image, description } = req.body;
   try {
     const [result] = await db.query(
-      "INSERT INTO events_summary (title, image, description, price, duration) VALUES (?, ?, ?, ?, ?)",
-      [title, image, description, price, duration]
+      "INSERT INTO events_summary (title, image, description) VALUES (?, ?, ?)",
+      [title, image, description]
     );
     res.json({ id: result.insertId, ...req.body });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Add event summary error:", err);
+    res.status(500).json({ error: "Failed to add event" });
   }
 });
 
@@ -203,7 +212,8 @@ app.get("/events", async (req, res) => {
     const [results] = await db.query("SELECT * FROM events_summary");
     res.render("events", { events: results });
   } catch (err) {
-    res.status(500).send("Database error: " + err.message);
+    console.error("Database error in /events:", err);
+    res.status(500).send("Unable to load events at this moment. Please check back shortly.");
   }
 });
 
@@ -220,10 +230,10 @@ app.get("/events/:title", async (req, res) => {
     if (results.length === 0) {
       return res.status(404).send("Event not found");
     }
-    console.log(results[0]);
     res.render("eventDetails", { event: results[0] });
   } catch (err) {
-    res.status(500).send("Database error: " + err.message);
+    console.error("Error fetching event details:", err);
+    res.status(500).send("Unable to load event details. Please try again later.");
   }
 });
 
@@ -240,34 +250,28 @@ app.post("/book-event", async (req, res) => {
     for (let i = 0; i < firstName.length; i++) {
       participants.push({
         first_name: firstName[i],
-        last_name: lastName[i],
-        phone: phone[i],
-        birthdate: birthdate[i],
-        gender: gender[i],
+        last_name: Array.isArray(lastName) ? lastName[i] : lastName,
+        phone: Array.isArray(phone) ? phone[i] : phone,
+        birthdate: Array.isArray(birthdate) ? birthdate[i] : birthdate,
+        gender: Array.isArray(gender) ? gender[i] : gender,
       });
     }
+  } else if (firstName && typeof firstName === "string") {
+    participants.push({
+      first_name: firstName,
+      last_name: Array.isArray(lastName) ? lastName[0] : lastName,
+      phone: Array.isArray(phone) ? phone[0] : phone,
+      birthdate: Array.isArray(birthdate) ? birthdate[0] : birthdate,
+      gender: Array.isArray(gender) ? gender[0] : gender,
+    });
   }
+
   if (!participants || participants.length === 0) {
     return res.status(400).send("At least one participant is required.");
   }
 
   const participants_count = participants.length;
   const user_id = req.session.user.user_id;
-
-  console.log("✅ User Booking Details:");
-  console.log("User ID:", user_id);
-  console.log("Event ID:", event_id);
-  console.log("Participants Count:", participants_count);
-
-  // Saare participants print karo
-  participants.forEach((p, i) => {
-    console.log(`👤 Participant ${i + 1}:`);
-    console.log("  First Name:", p.first_name);
-    console.log("  Last Name:", p.last_name);
-    console.log("  Phone:", p.phone);
-    console.log("  Birthdate:", p.birthdate);
-    console.log("  Gender:", p.gender);
-  });
 
   try {
     // STEP 1: Bookings table me insert
@@ -279,87 +283,85 @@ app.post("/book-event", async (req, res) => {
     const booking_id = result.insertId; // yeh naya booking id milega
 
     // STEP 2: Participants table me insert
-    if (participants && Array.isArray(participants)) {
-      for (const p of participants) {
-        await db.query(
-          `INSERT INTO booking_participants 
-          (booking_id, first_name, last_name, phone, birthdate, gender) 
-          VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            booking_id,
-            p.first_name,
-            p.last_name,
-            p.phone,
-            p.birthdate,
-            p.gender,
-          ]
-        );
-      }
+    for (const p of participants) {
+      await db.query(
+        `INSERT INTO booking_participants 
+        (booking_id, first_name, last_name, phone, birthdate, gender) 
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          booking_id,
+          p.first_name,
+          p.last_name,
+          p.phone,
+          p.birthdate,
+          p.gender,
+        ]
+      );
     }
 
     res.redirect("/profile");
   } catch (err) {
     console.error("Booking error:", err);
-    res.status(500).send("Database error: " + err.message);
+    res.status(500).send("Unable to complete booking. Please try again later.");
   }
 });
 
 // UPDATING BOOKINGS
 app.patch("/update-booking/:booking_id", async (req, res) => {
-  const { participantId, firstName, lastName, phone, birthdate, gender } =
-    req.body;
   const bookingId = req.params.booking_id;
+  const participantIds = req.body.participantId || req.body["participantId[]"] || [];
+  const firstNames = req.body.firstName || req.body["firstName[]"] || [];
+  const lastNames = req.body.lastName || req.body["lastName[]"] || [];
+  const phones = req.body.phone || req.body["phone[]"] || [];
+  const birthdates = req.body.birthdate || req.body["birthdate[]"] || [];
+  const genders = req.body.gender || req.body["gender[]"] || [];
+
+  const idArr = Array.isArray(participantIds) ? participantIds : (participantIds ? [participantIds] : []);
+  const fnArr = Array.isArray(firstNames) ? firstNames : (firstNames ? [firstNames] : []);
+  const lnArr = Array.isArray(lastNames) ? lastNames : (lastNames ? [lastNames] : []);
+  const phArr = Array.isArray(phones) ? phones : (phones ? [phones] : []);
+  const bdArr = Array.isArray(birthdates) ? birthdates : (birthdates ? [birthdates] : []);
+  const gdArr = Array.isArray(genders) ? genders : (genders ? [genders] : []);
 
   try {
-    // Loop for all participants
-    const updates = participantId.map((id, i) => {
-      return new Promise((resolve, reject) => {
-        if (id) {
-          // ==== UPDATE existing participant ====
-          const sqlUpdate = `
-            UPDATE booking_participants 
-            SET first_name = ?, last_name = ?, phone = ?, birthdate = ?, gender = ? 
-            WHERE participant_id = ?
-          `;
-          db.query(
-            sqlUpdate,
-            [firstName[i], lastName[i], phone[i], birthdate[i], gender[i], id],
-            (err, result) => {
-              if (err) return reject(err);
-              resolve(result);
-            }
-          );
-        } else {
-          // ==== INSERT new participant ====
-          const sqlInsert = `
-            INSERT INTO booking_participants 
-              (booking_id, first_name, last_name, phone, birthdate, gender) 
-            VALUES (?, ?, ?, ?, ?, ?)
-          `;
-          db.query(
-            sqlInsert,
-            [
-              bookingId,
-              firstName[i],
-              lastName[i],
-              phone[i],
-              birthdate[i],
-              gender[i],
-            ],
-            (err, result) => {
-              if (err) return reject(err);
-              resolve(result);
-            }
-          );
-        }
-      });
-    });
+    for (let i = 0; i < fnArr.length; i++) {
+      const id = idArr[i];
+      const fn = fnArr[i];
+      const ln = lnArr[i];
+      const ph = phArr[i];
+      const bd = bdArr[i];
+      const gd = gdArr[i];
 
-    await Promise.all(updates);
-    res.redirect("/profile"); // update/insert ke baad redirect
+      if (id) {
+        // UPDATE existing participant
+        const sqlUpdate = `
+          UPDATE booking_participants 
+          SET first_name = ?, last_name = ?, phone = ?, birthdate = ?, gender = ? 
+          WHERE participant_id = ?
+        `;
+        await db.query(sqlUpdate, [fn, ln, ph, bd, gd, id]);
+      } else {
+        // INSERT new participant
+        const sqlInsert = `
+          INSERT INTO booking_participants 
+            (booking_id, first_name, last_name, phone, birthdate, gender) 
+          VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        await db.query(sqlInsert, [bookingId, fn, ln, ph, bd, gd]);
+      }
+    }
+
+    if (fnArr.length > 0) {
+      await db.query(
+        "UPDATE bookings SET participants_count = ? WHERE booking_id = ?",
+        [fnArr.length, bookingId]
+      );
+    }
+
+    res.redirect("/profile");
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Error updating/adding participants");
+    console.error("Update booking error:", err);
+    res.status(500).send("Error updating participants.");
   }
 });
 
@@ -397,56 +399,48 @@ app.get("/logout", (req, res) => {
 
 // 🟢 Server Start
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 });
 
 // ---------------------------ADMIN PANEL-------------------------------
 
 // Main admin panel page
 app.get("/admin_panel", async (req, res) => {
-  const [users] = await db.query("SELECT COUNT(*) AS userCount FROM users");
-  const [events] = await db.query("SELECT COUNT(*) AS eventCount FROM events");
-  const [bookings] = await db.query(
-    "SELECT COUNT(*) AS bookingCount FROM bookings"
-  );
+  try {
+    const [users] = await db.query("SELECT COUNT(*) AS userCount FROM users");
+    const [events] = await db.query("SELECT COUNT(*) AS eventCount FROM events");
+    const [bookings] = await db.query(
+      "SELECT COUNT(*) AS bookingCount FROM bookings"
+    );
 
-  res.render("admin_panel", {
-    userCount: users[0].userCount,
-    eventCount: events[0].eventCount,
-    bookingCount: bookings[0].bookingCount,
-  });
+    res.render("admin_panel", {
+      userCount: users[0]?.userCount || 0,
+      eventCount: events[0]?.eventCount || 0,
+      bookingCount: bookings[0]?.bookingCount || 0,
+    });
+  } catch (err) {
+    console.error("Admin panel error:", err);
+    res.status(500).send("Unable to load admin panel.");
+  }
 });
 
 // Acception and storing event summary in db
-app.post("/newEvent_summary", upload.single("image"), (req, res) => {
-  const { event_title, event_description } = req.body;
-  const image = req.file; // multer ke through aayi file
-  console.log("Saved file:", image);
+app.post("/newEvent_summary", upload.single("image"), async (req, res) => {
+  try {
+    const { event_title, event_description } = req.body;
+    const image = req.file; // multer ke through aayi file
+    const relativePath = image ? "images/Events/" + image.filename : null;
 
-  // Example: DB me path store karo
-  const relativePath = "images/Events/" + image.filename;
-  console.log("Store this in DB:", relativePath);
+    // ✅ Insert query (events_summary table me)
+    const sql =
+      "INSERT INTO events_summary (title, image, description) VALUES (?, ?, ?)";
+    await db.query(sql, [event_title, relativePath, event_description]);
 
-  console.log("Event Title:", event_title);
-  console.log("Event Description:", event_description);
-  console.log("Image File:", relativePath);
-
-  // ✅ Insert query (events_summary table me)
-  const sql =
-    "INSERT INTO events_summary (title, image, description) VALUES (?, ?, ?)";
-  db.query(
-    sql,
-    [event_title, relativePath, event_description],
-    (err, result) => {
-      if (err) {
-        console.error("Error inserting event:", err);
-        return res.status(500).send("Database error");
-      }
-
-      console.log("Event inserted:", result);
-    }
-  );
-  res.send("Event saved successfully!");
+    res.send("Event saved successfully!");
+  } catch (err) {
+    console.error("Error inserting event summary:", err);
+    res.status(500).send("Database error saving event summary.");
+  }
 });
 
 // Add detailed event info
@@ -507,8 +501,13 @@ app.post(
 
 // Admin Events Page - List all events
 app.get("/admin_events", async (req, res) => {
-  const [events] = await db.query("SELECT * FROM events_summary");
-  res.render("admin_events", { events });
+  try {
+    const [events] = await db.query("SELECT * FROM events_summary");
+    res.render("admin_events", { events });
+  } catch (err) {
+    console.error("Admin events error:", err);
+    res.status(500).send("Unable to load events.");
+  }
 });
 
 app.delete("/admin_events/:title", async (req, res) => {
@@ -518,7 +517,7 @@ app.delete("/admin_events/:title", async (req, res) => {
     await db.query("DELETE FROM events_summary WHERE title = ?", [eventTitle]);
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("Error deleting event summary:", err);
     res.json({ success: false });
   }
 });
@@ -529,25 +528,28 @@ app.get("/admin_login", (req, res) => {
 });
 
 // Admin validation
-app.post("/admin_login", async (req, res, next) => {
+app.post("/admin_login", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.render("admin_login", { error: "Please enter both email and password" });
   }
 
-  const [rows] = await db.query(
-    "SELECT * FROM admin WHERE email = ? AND password = ?",
-    [email, password]
-  ).catch(next);  // ❗ error ko next() se Express ko de diya
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM admin WHERE email = ? AND password = ?",
+      [email, password]
+    );
 
-  if (!rows) return; // agar error aaya to yahin ruk jaayega
-
-  if (rows.length > 0) {
-    req.session.admin = rows[0];
-    return res.redirect("/admin_panel");
-  } else {
-    return res.render("admin_login", { error: "Invalid Email or Password" });
+    if (rows && rows.length > 0) {
+      req.session.admin = rows[0];
+      return res.redirect("/admin_panel");
+    } else {
+      return res.render("admin_login", { error: "Invalid Email or Password" });
+    }
+  } catch (err) {
+    console.error("Admin login error:", err);
+    return res.render("admin_login", { error: "Database error during login. Please try again." });
   }
 });
 
