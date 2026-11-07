@@ -1,0 +1,498 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+header {
+  color: white;
+  width: 100%;
+  padding: 15px 20px;
+  z-index: 10;
+  background: transparent;
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+nav {
+  display: flex;
+  margin: auto;
+  align-items: center;
+  background: transparent;
+  max-width: 80%;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+  justify-content: space-between;
+  line-height: 34px;
+  z-index: 999;
+}
+
+@media (max-width: 768px) {
+  nav {
+    max-width: 100%;
+  }
+}
+
+button i {
+  color: white;
+  font-size: 24px;
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+h3 {
+  font-size: 24px;
+  margin: 0;
+}
+
+/* --- HERO-SECTION(Images and Text) --- */
+.hero-section {
+  height: 75vh;
+  /* background-image: url('/images/climbing.jpg');  */
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hero-section::before {
+  content: "";
+  position: absolute;
+  top: 0; 
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.bg-transition {
+  position: absolute;
+  top: 0;
+  left: 100%; 
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: left 1s ease-in-out;
+  z-index: 0; 
+}
+
+.hero-content {
+  width: 40%;
+  /* border: 2px solid white; */
+  position: relative;
+  top: 9rem;
+  left: 12.2rem;
+  z-index: 2;
+  color: white;
+  text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+.top-content{
+  padding: 1rem 0;
+  /* border: 2px solid white; */
+  display: flex;
+  flex-direction: column;
+  /* justify-content: space-between; */
+  /* gap: 0.5rem; */
+}
+
+.top-content p {
+  font-size: 1.6rem;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 1.5px;
+}
+
+.typed-text-wrapper {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+/* The text that will be typed */
+.typed-text {
+  display: inline;
+  font-weight: bold;
+  font-size: 3rem;
+  color: white;
+  border-right: none;  
+}
+
+/* Blinking Cursor */
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 3rem; /* same as font size of text */
+  background-color: white;
+  margin-left: 2px;
+  animation: blink 0.7s steps(1) infinite;
+  vertical-align: bottom;
+}
+
+/* Blinking animation */
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.top-content button{
+  background-color: white;
+  color: black;
+  border-radius: 0.4rem;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 6rem;
+}
+
+.top-content button:hover{
+  background-color: rgb(224, 220, 220);
+}
+
+.top-content button a{
+  text-decoration: none;
+  color: black;
+}
+
+/* Top Content responsiveness */
+@media (max-width: 768px) {
+  .hero-content {
+    width: 80%;
+    left: 10%;
+    top: 8rem;
+  }
+  
+  .top-content button {
+    width: 5rem;
+    font-size: 1rem;
+  }
+  
+  .typed-text {
+    font-size: 2.5rem;
+  }
+}
+
+.bottom-content{
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-content p{
+  font-weight: bold;
+}
+
+.bottom-content .tags{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
+
+.participants-tag, .volunteers-tag, .events-tag, .years-tag{
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  /* background-color: rgba(255, 255, 255, 0.1); */
+}
+
+.participants-tag i, .volunteers-tag i, .events-tag i, .years-tag i{
+  font-size: 30px;
+  color: white;
+}
+
+.participants-tag .description,
+.volunteers-tag .description,
+.events-tag .description,
+.years-tag .description {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.participants-tag .description h3 , .volunteers-tag .description h3, .events-tag .description h3, .years-tag .description h3  {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+
+.participants-tag .description p, .volunteers-tag .description p, .events-tag .description p, .years-tag .description p{
+  margin: 0;
+  font-size: 16px;
+  font-weight: normal;
+  letter-spacing: 1.5px;
+}
+
+
+/* Bottom-content Responsiveness */
+@media (max-width: 768px) {
+  .bottom-content {
+    align-items: flex-start;
+    margin-top: 3rem;
+    text-align: left;
+  }
+
+  .bottom-content .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    justify-content: flex-start;
+    width: 100%;
+    margin: 0;            
+  }
+
+  .participants-tag,
+  .volunteers-tag,
+  .events-tag,
+  .years-tag {
+    width: 45%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.4rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .participants-tag i,
+  .volunteers-tag i,
+  .events-tag i,
+  .years-tag i {
+    font-size: 22px;
+    min-width: 22px;
+  }
+
+  .participants-tag .description h3,
+  .volunteers-tag .description h3,
+  .events-tag .description h3,
+  .years-tag .description h3 {
+    font-size: 15px;
+  }
+
+  .participants-tag .description p,
+  .volunteers-tag .description p,
+  .events-tag .description p,
+  .years-tag .description p {
+    font-size: 12px;
+  }
+}
+
+
+/* Highlighted-events section */
+
+.highlighted-events-section {
+  background-color: #ffffff;
+  padding: 2rem 1.5rem;
+  /* border: 2px solid chocolate; */
+  width: 80%;
+  margin: auto;
+}
+
+.highlighted-events-section h1{
+  color: chocolate;
+  font-size: 1.8rem;
+  letter-spacing: 0.1rem;
+}
+
+.highlighted-events-container{
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.highlighted-events-container .event-card{
+  /* border: 2px solid black; */
+  border-radius: 0.5rem;
+  min-width: 24%;
+  height: 62vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Highlighted-events responsiveness */
+@media(max-width:768px){
+  
+  .highlighted-events-section{
+    width: 90%;
+  }
+  
+  .highlighted-events-section, .weekend-events-section{
+    margin: auto;
+  }
+  
+  .highlighted-events-section h1{
+    margin-left: 0;
+    text-align: center;
+  }
+  
+  .highlighted-events-container, .weekend-events-container {
+    width: 90%;
+    margin: auto;
+  }
+  
+  .highlighted-events-container .event-card{
+    min-width: 100%;
+    min-height: 100%;
+  }
+}
+
+/* Weekend-events section */
+
+.weekend-events-section {
+  background-color: #dbdada;
+  padding: 2rem 1.5rem;
+  width: 100%;
+}
+
+.weekend-events-section h1{
+  color: chocolate;
+  font-size: 1.8rem;
+  letter-spacing: 0.1rem;
+  /* margin-left: 11.6rem; */
+}
+
+.weekend-events-container{
+  width: 80%;
+  margin: auto;
+  padding: 1rem 0;
+  /* border: 2px solid black; */
+}
+
+.weekend-events-cards{
+  padding: 1rem 0;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 1.5rem;
+}
+
+.event-card{
+  border-radius: 0.5rem;
+  height: 30vh;
+  min-width: 14vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media(max-width:768px){
+  .weekend-events-section h1{
+    font-size: 1.8rem;
+    margin-left: 0;
+    text-align: center;
+  }
+  .weekend-events-container .event-card {
+    min-width: 100%;
+    min-height: 100%;
+  }
+}
+
+/* Testimonial-Section */
+.testimonials-section {
+  background-color: #ffffff;
+  padding: 2rem 1.5rem;
+  /* border: 2px solid chocolate; */
+  width: 100%;
+  margin: auto;
+}
+
+.testimonials-section h1{
+  color: chocolate;
+  font-size: 1.8rem;
+  letter-spacing: 0.1rem;
+}
+
+.testimonials-container{
+  max-width: 80%;
+  margin: auto;
+  /* border: 2px solid black; */
+  padding: 1rem 0;
+}
+
+.testimonial-cards{
+  display: flex;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  gap: 3rem;
+  margin-top: 3rem;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.testimonial-card{
+  border-radius: 0.5rem;
+  height: 50%;
+  width: 30%;
+  background-color: #f2f2f2;
+  padding: 0.5rem;
+}
+
+.testimonial-card h3{
+  padding-bottom: 1rem;
+  font-weight: 500;
+}
+
+.testimonial-card p {
+  font-size: 0.9rem;
+  color: #484848;
+  margin-top: 2rem;
+  letter-spacing: 1px;
+}
+
+.rating{
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #c0bebe;
+} 
+
+.rating i{
+  color: gold;
+}
+
+/* Testimonials-section responsiveness */
+@media(max-width:768px){
+  .testimonials-section {
+    width: 100%;
+    margin: auto;
+    /* border: 2px solid chocolate; */
+  }
+  .testimonials-section h1 {
+    font-size: 1.8rem;
+    margin-left: 0;
+    text-align: center;
+  }
+  .testimonials-container{
+    max-width: 100%;
+  }
+  .testimonial-cards{
+    max-width: 100%;
+  }
+  .testimonial-card{
+    height: 100%;
+    width: 100%;
+  }
+}
+
+ 

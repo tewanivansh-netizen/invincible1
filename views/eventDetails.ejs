@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invincible</title>
+    <link rel="stylesheet" href="/eventDetails.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+        integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <header>
+        <div class="overlay" style="background-image: url('<%= event.image %>')"></div>
+        <nav>
+            <h3>INVINCIBLE</h3>
+            <button class="hamburger">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </nav>
+        <div class="hero-section"></div>
+    </header>
+
+    <main>
+        <div class="left-desc">
+            <div class="event-title">
+                <h2>
+                    <%= event.title %>
+                </h2>
+                <p>
+                    <%= event.tagline %>
+                </p>
+            </div>
+            <div class="event-tags">
+                <div class="duration-tag">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <div class="description">
+                        <h3>Duration</h3>
+                        <p>
+                            <%= event.duration %>
+                        </p>
+                    </div>
+                </div>
+                <div class="difficulty-tag">
+                    <i class="fa-regular fa-map"></i>
+                    <div class="description">
+                        <h3>Diffficulty</h3>
+                        <p>
+                            <%= event.difficulty %>
+                        </p>
+                    </div>
+                </div>
+                <div class="age-tag">
+                    <i class="fa-solid fa-users"></i>
+                    <div class="description">
+                        <h3>Age Group</h3>
+                        <p>
+                            <%= event.age_group %>
+                        </p>
+                    </div>
+                </div>
+                <div class="altitude-tag">
+                    <i class="fa-solid fa-person-hiking"></i>
+                    <div class="description">
+                        <h3>Altitude</h3>
+                        <p>
+                            <%= event.altitude %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="event-description">
+                <h3>About</h3>
+                <p>
+                    <%= event.description %>
+                </p>
+            </div>
+        </div>
+        <div class="right-desc">
+            <h2>&#8377;<%= event.price %> <span>/ person</span></h2>
+            <p>Includes</p>
+            <div class="include-tags">
+                <div class="tag">
+                    <i class="fa-solid fa-utensils"></i>
+                    <p>Food</p>
+                </div>
+                <div class="tag">
+                    <i class="fa-solid fa-bed"></i>
+                    <p>Stay</p>
+                </div>
+                <div class="tag">
+                    <i class="fa-solid fa-kit-medical"></i>
+                    <p>First Aid</p>
+                </div>
+                <div class="tag">
+                    <i class="fa-solid fa-truck-medical"></i>
+                    <p>Backup Vehicle</p>
+                </div>
+            </div>
+            <!-- <button class="book-now-btn">Book Now</button> -->
+            <button class="book-now-btn" data-event-id="<%= event.event_id %>" data-age-group="<%= event.age_group %>">
+                Book Now
+            </button>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Registration</h2>
+
+            <!-- Participants Selector -->
+            <form id="bookingForm" action="/book-event" method="POST">
+                <input type="hidden" id = "event_id" name="event_id" value="<%= event.event_id %>" />
+                <div class="participants-selector">
+                    <label>Select Participants:</label>
+                    <div id="participantsButtons"></div>
+                </div>
+
+                <div id="participantsForms"></div>
+
+                <button id="submitBooking" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <%- include("partials/footer") %>
+
+        <!-- Sidebar -->
+        <%- include("partials/sidebar") %>
+
+            <script src="/eventDetails.js"></script>
+</body>
+
+</html>
